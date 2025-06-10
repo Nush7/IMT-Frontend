@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 
 const LoginPage: React.FC = () => {
   const [loginData, setLoginData] = useState({ username: '', password: '' });
-  const [signupData, setSignupData] = useState({ username: '', password: '', role: 'user' as 'user' | 'admin' });
+  const [signupData, setSignupData] = useState({ username: '', password: '' });
   const [isLoading, setIsLoading] = useState(false);
   const { login, signup } = useAuth();
   const { toast } = useToast();
@@ -19,7 +18,7 @@ const LoginPage: React.FC = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     try {
       const success = await login(loginData.username, loginData.password);
       if (success) {
@@ -34,10 +33,10 @@ const LoginPage: React.FC = () => {
           variant: "destructive",
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       toast({
-        title: "Error",
-        description: "Something went wrong",
+        title: "Login Error",
+        description: error.message || "Something went wrong",
         variant: "destructive",
       });
     } finally {
@@ -48,25 +47,20 @@ const LoginPage: React.FC = () => {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     try {
-      const success = await signup(signupData.username, signupData.password, signupData.role);
+      const success = await signup(signupData.username, signupData.password, 'user');
       if (success) {
         toast({
           title: "Account Created",
           description: "Welcome to the platform!",
         });
-      } else {
-        toast({
-          title: "Signup Failed",
-          description: "Could not create account",
-          variant: "destructive",
-        });
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Signup error:', error);
       toast({
-        title: "Error",
-        description: "Something went wrong",
+        title: "Signup Failed",
+        description: error.message || "Could not create account. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -79,7 +73,7 @@ const LoginPage: React.FC = () => {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Inventory Manager</h1>
-          <p className="text-gray-600">Access your inventory management system</p>
+
         </div>
 
         <Tabs defaultValue="login" className="w-full">
@@ -87,7 +81,7 @@ const LoginPage: React.FC = () => {
             <TabsTrigger value="login">Login</TabsTrigger>
             <TabsTrigger value="signup">Sign Up</TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="login">
             <Card>
               <CardHeader>
@@ -124,16 +118,11 @@ const LoginPage: React.FC = () => {
                     {isLoading ? "Logging in..." : "Login"}
                   </Button>
                 </form>
-                
-                <div className="mt-4 text-sm text-center text-gray-600">
-                  <p>Demo credentials:</p>
-                  <p>Admin: <strong>admin</strong> / any password</p>
-                  <p>User: <strong>user</strong> / any password</p>
-                </div>
+
               </CardContent>
             </Card>
           </TabsContent>
-          
+
           <TabsContent value="signup">
             <Card>
               <CardHeader>
@@ -165,18 +154,6 @@ const LoginPage: React.FC = () => {
                       onChange={(e) => setSignupData(prev => ({ ...prev, password: e.target.value }))}
                       required
                     />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-role">Account Type</Label>
-                    <Select value={signupData.role} onValueChange={(value: 'user' | 'admin') => setSignupData(prev => ({ ...prev, role: value }))}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select account type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="user">User</SelectItem>
-                        <SelectItem value="admin">Admin</SelectItem>
-                      </SelectContent>
-                    </Select>
                   </div>
                   <Button type="submit" className="w-full" disabled={isLoading}>
                     {isLoading ? "Creating Account..." : "Sign Up"}

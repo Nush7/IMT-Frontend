@@ -1,14 +1,11 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useToast } from '@/hooks/use-toast';
+import { Trash2, Save, X, AlertTriangle } from 'lucide-react';
 import { Product } from '@/components/shared/ProductCard';
-import { Trash2 } from 'lucide-react';
 
 interface EditProductFormProps {
   product: Product;
@@ -17,11 +14,11 @@ interface EditProductFormProps {
   onCancel: () => void;
 }
 
-const EditProductForm: React.FC<EditProductFormProps> = ({ 
-  product, 
-  onUpdateProduct, 
-  onDelete, 
-  onCancel 
+const EditProductForm: React.FC<EditProductFormProps> = ({
+  product,
+  onUpdateProduct,
+  onDelete,
+  onCancel
 }) => {
   const [formData, setFormData] = useState({
     name: product.name,
@@ -32,206 +29,166 @@ const EditProductForm: React.FC<EditProductFormProps> = ({
     quantity: product.quantity,
     price: product.price
   });
-  const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-
-    try {
-      // Validate form
-      if (!formData.name || !formData.sku) {
-        toast({
-          title: "Validation Error",
-          description: "Name and SKU are required fields",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (formData.quantity < 0 || formData.price < 0) {
-        toast({
-          title: "Validation Error",
-          description: "Quantity and price must be positive numbers",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const updatedProduct: Product = {
-        ...product,
-        name: formData.name,
-        type: formData.type || undefined,
-        sku: formData.sku,
-        image_url: formData.image_url || undefined,
-        description: formData.description || undefined,
-        quantity: Number(formData.quantity),
-        price: Number(formData.price)
-      };
-
-      onUpdateProduct(updatedProduct);
-
-      toast({
-        title: "Product Updated",
-        description: `${formData.name} has been updated successfully`,
-      });
-
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update product",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    onUpdateProduct({
+      ...product,
+      ...formData
+    });
   };
 
   const handleDelete = () => {
     const productId = product._id || product.sku;
-    if (window.confirm(`Are you sure you want to delete "${product.name}"? This action cannot be undone.`)) {
-      onDelete(productId);
-      toast({
-        title: "Product Deleted",
-        description: `${product.name} has been removed from inventory`,
-      });
-    }
-  };
-
-  const handleInputChange = (field: string, value: string | number) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    onDelete(productId);
+    setShowDeleteConfirm(false);
   };
 
   return (
-    <Card className="w-full">
+    <Card>
       <CardHeader>
-        <div className="flex justify-between items-start">
-          <div>
-            <CardTitle>Edit Product</CardTitle>
-            <CardDescription>
-              Update product details and inventory information
-            </CardDescription>
-          </div>
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={handleDelete}
-          >
-            <Trash2 className="h-4 w-4 mr-2" />
-            Delete
+        <CardTitle className="flex items-center justify-between">
+          <span>Edit Product</span>
+          <Button onClick={onCancel} variant="ghost" size="sm">
+            <X className="h-4 w-4" />
           </Button>
-        </div>
+        </CardTitle>
+        <CardDescription>
+          Update product information or remove from inventory
+        </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="edit-name">Product Name *</Label>
+              <Label htmlFor="name">Product Name *</Label>
               <Input
-                id="edit-name"
-                type="text"
-                placeholder="Enter product name"
+                id="name"
                 value={formData.name}
-                onChange={(e) => handleInputChange('name', e.target.value)}
+                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                 required
               />
             </div>
-            
             <div className="space-y-2">
-              <Label htmlFor="edit-type">Product Type</Label>
-              <Select value={formData.type} onValueChange={(value) => handleInputChange('type', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select product type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Electronics">Electronics</SelectItem>
-                  <SelectItem value="Clothing">Clothing</SelectItem>
-                  <SelectItem value="Food & Beverage">Food & Beverage</SelectItem>
-                  <SelectItem value="Home & Garden">Home & Garden</SelectItem>
-                  <SelectItem value="Sports & Outdoors">Sports & Outdoors</SelectItem>
-                  <SelectItem value="Books">Books</SelectItem>
-                  <SelectItem value="Toys & Games">Toys & Games</SelectItem>
-                  <SelectItem value="Health & Beauty">Health & Beauty</SelectItem>
-                  <SelectItem value="Automotive">Automotive</SelectItem>
-                  <SelectItem value="Other">Other</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label htmlFor="type">Product Type *</Label>
+              <Input
+                id="type"
+                value={formData.type}
+                onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value }))}
+                placeholder="e.g. Electronics, Clothing, Books"
+                required
+              />
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="edit-sku">SKU *</Label>
+              <Label htmlFor="sku">SKU *</Label>
               <Input
-                id="edit-sku"
-                type="text"
-                placeholder="Product SKU"
+                id="sku"
                 value={formData.sku}
-                onChange={(e) => handleInputChange('sku', e.target.value)}
+                onChange={(e) => setFormData(prev => ({ ...prev, sku: e.target.value }))}
                 required
               />
             </div>
-            
             <div className="space-y-2">
-              <Label htmlFor="edit-image_url">Image URL</Label>
+              <Label htmlFor="image_url">Image URL</Label>
               <Input
-                id="edit-image_url"
+                id="image_url"
                 type="url"
-                placeholder="https://example.com/image.jpg"
                 value={formData.image_url}
-                onChange={(e) => handleInputChange('image_url', e.target.value)}
+                onChange={(e) => setFormData(prev => ({ ...prev, image_url: e.target.value }))}
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="edit-description">Description</Label>
+            <Label htmlFor="description">Description *</Label>
             <Textarea
-              id="edit-description"
-              placeholder="Enter product description"
+              id="description"
               value={formData.description}
-              onChange={(e) => handleInputChange('description', e.target.value)}
+              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
               rows={3}
+              required
             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="edit-quantity">Quantity *</Label>
+              <Label htmlFor="quantity">Quantity *</Label>
               <Input
-                id="edit-quantity"
+                id="quantity"
                 type="number"
                 min="0"
-                placeholder="0"
                 value={formData.quantity}
-                onChange={(e) => handleInputChange('quantity', parseInt(e.target.value) || 0)}
+                onChange={(e) => setFormData(prev => ({ ...prev, quantity: parseInt(e.target.value) || 0 }))}
                 required
               />
             </div>
-            
             <div className="space-y-2">
-              <Label htmlFor="edit-price">Price ($) *</Label>
+              <Label htmlFor="price">Price ($) *</Label>
               <Input
-                id="edit-price"
+                id="price"
                 type="number"
                 min="0"
                 step="0.01"
-                placeholder="0.00"
                 value={formData.price}
-                onChange={(e) => handleInputChange('price', parseFloat(e.target.value) || 0)}
+                onChange={(e) => setFormData(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
                 required
               />
             </div>
           </div>
 
-          <div className="flex gap-4 pt-4">
-            <Button type="submit" disabled={isLoading} className="flex-1">
-              {isLoading ? "Updating..." : "Update Product"}
+          {/* Delete Confirmation Section */}
+          {showDeleteConfirm && (
+            <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <AlertTriangle className="h-5 w-5 text-destructive" />
+                <h4 className="font-medium text-destructive">Confirm Deletion</h4>
+              </div>
+              <p className="text-sm text-muted-foreground mb-4">
+                Are you sure you want to permanently delete "{product.name}"? This action cannot be undone.
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleDelete}
+                >
+                  Yes, Delete
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowDeleteConfirm(false)}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
+
+          <div className="flex justify-between pt-4">
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => setShowDeleteConfirm(true)}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete Product
             </Button>
-            <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
-              Cancel
-            </Button>
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" onClick={onCancel}>
+                Cancel
+              </Button>
+              <Button type="submit">
+                <Save className="mr-2 h-4 w-4" />
+                Update Product
+              </Button>
+            </div>
           </div>
         </form>
       </CardContent>

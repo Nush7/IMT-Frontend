@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { Product } from './ProductCard';
 
@@ -37,7 +36,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     setCartItems(prev => {
       const productId = product._id || product.sku; // Use _id if available, fallback to sku
       const existingItem = prev.find(item => (item._id || item.sku) === productId);
-      
+
       if (existingItem) {
         return prev.map(item =>
           (item._id || item.sku) === productId
@@ -63,11 +62,15 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     }
 
     setCartItems(prev =>
-      prev.map(item =>
-        (item._id || item.sku) === productId
-          ? { ...item, cartQuantity: Math.min(quantity, item.quantity) }
-          : item
-      )
+      prev.map(item => {
+        const currentProductId = item._id || item.sku;
+        if (currentProductId === productId) {
+          // Ensure quantity doesn't exceed available stock
+          const maxQuantity = Math.min(quantity, item.quantity);
+          return { ...item, cartQuantity: maxQuantity };
+        }
+        return item;
+      })
     );
   };
 
